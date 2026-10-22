@@ -1,13 +1,13 @@
-name: Badgery runner picker
+name: Owlery runner picker
 description: >-
-  Route a workflow's jobs to Badgery when it is healthy and has what they ask
+  Route a workflow's jobs to Owlery when it is healthy and has what they ask
   for, and to your own fallback runners when it is not.
 inputs:
   want:
-    description: The Badgery label to use when Badgery can take the job.
+    description: The Owlery label to use when Owlery can take the job.
     required: false
   fallback:
-    description: The label to use otherwise. Yours; Badgery never chooses it.
+    description: The label to use otherwise. Yours; Owlery never chooses it.
     required: false
   routes:
     description: >-
@@ -15,9 +15,9 @@ inputs:
       becomes an output. Use instead of want/fallback.
     required: false
   server:
-    description: The Badgery server's public origin.
+    description: The Owlery server's public origin.
     required: false
-    default: https://hooks.badgery.ai
+    default: https://hooks.owlery.sh
 outputs:
   runner:
     description: The label chosen for want/fallback. With routes, one output per key.

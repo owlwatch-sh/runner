@@ -59,40 +59,40 @@ function clock() {
   return { now: () => t, wait: async (ms) => void (t += ms) }
 }
 
-const one = parseRoutes({ INPUT_WANT: 'badgery-macos', INPUT_FALLBACK: 'macos-15' })
+const one = parseRoutes({ INPUT_WANT: 'owlery-macos', INPUT_FALLBACK: 'macos-15' })
 const verdict = (answer, reason = '', graceSeconds = 180) => ({ labels: { runner: { answer, reason } }, graceSeconds })
 
 test('routes: want/fallback or a routes block, never both, labels checked', () => {
-  assert.deepEqual(one, [{ key: 'runner', want: 'badgery-macos', fallback: 'macos-15' }])
-  assert.deepEqual(parseRoutes({ INPUT_ROUTES: 'linux: badgery-linux -> ubuntu-latest\n# c\n\nmac: badgery-macos -> macos-15' }), [
-    { key: 'linux', want: 'badgery-linux', fallback: 'ubuntu-latest' },
-    { key: 'mac', want: 'badgery-macos', fallback: 'macos-15' },
+  assert.deepEqual(one, [{ key: 'runner', want: 'owlery-macos', fallback: 'macos-15' }])
+  assert.deepEqual(parseRoutes({ INPUT_ROUTES: 'linux: owlery-linux -> ubuntu-latest\n# c\n\nmac: owlery-macos -> macos-15' }), [
+    { key: 'linux', want: 'owlery-linux', fallback: 'ubuntu-latest' },
+    { key: 'mac', want: 'owlery-macos', fallback: 'macos-15' },
   ])
   assert.throws(() => parseRoutes({ INPUT_ROUTES: 'a: x -> y', INPUT_WANT: 'x' }))
-  assert.throws(() => parseRoutes({ INPUT_WANT: 'badgery-linux' }), /fallback/)
+  assert.throws(() => parseRoutes({ INPUT_WANT: 'owlery-linux' }), /fallback/)
   assert.throws(() => parseRoutes({ INPUT_WANT: 'a b', INPUT_FALLBACK: 'c' }))
   assert.throws(() => parseRoutes({ INPUT_ROUTES: 'a: x -> y\na: x -> z' }), /repeated/)
-  // A fallback Badgery would serve too is no fallback.
-  assert.throws(() => parseRoutes({ INPUT_WANT: 'badgery-linux', INPUT_FALLBACK: 'badgery-macos' }), /your own runners/)
-  assert.throws(() => parseRoutes({ INPUT_WANT: 'badgery-linux', INPUT_FALLBACK: 'self-hosted' }), /your own runners/)
+  // A fallback Owlery would serve too is no fallback.
+  assert.throws(() => parseRoutes({ INPUT_WANT: 'owlery-linux', INPUT_FALLBACK: 'owlery-macos' }), /your own runners/)
+  assert.throws(() => parseRoutes({ INPUT_WANT: 'owlery-linux', INPUT_FALLBACK: 'self-hosted' }), /your own runners/)
 })
 
 test('server: https origin only, http just for loopback', () => {
-  assert.equal(serverURL('https://hooks.badgery.ai').origin, 'https://hooks.badgery.ai')
+  assert.equal(serverURL('https://hooks.owlery.sh').origin, 'https://hooks.owlery.sh')
   assert.ok(serverURL('http://127.0.0.1:8080'))
-  assert.throws(() => serverURL('http://hooks.badgery.ai'))
-  assert.throws(() => serverURL('https://hooks.badgery.ai/x'))
-  assert.throws(() => serverURL('https://u:p@hooks.badgery.ai'))
+  assert.throws(() => serverURL('http://hooks.owlery.sh'))
+  assert.throws(() => serverURL('https://hooks.owlery.sh/x'))
+  assert.throws(() => serverURL('https://u:p@hooks.owlery.sh'))
 })
 
-test('healthy Badgery: want, asked once, token for the server origin', async () => {
+test('healthy Owlery: want, asked once, token for the server origin', async () => {
   const s = await stub([verdict('want')])
   try {
     const got = await decide(s.env(), one, clock())
-    assert.equal(got.runner.label, 'badgery-macos')
+    assert.equal(got.runner.label, 'owlery-macos')
     assert.equal(s.seen.picks.length, 1)
     assert.equal(s.seen.picks[0].auth, 'Bearer oidc-token')
-    assert.deepEqual(s.seen.picks[0].body, { labels: { runner: 'badgery-macos' } })
+    assert.deepEqual(s.seen.picks[0].body, { labels: { runner: 'owlery-macos' } })
     assert.deepEqual(s.seen.audiences, [s.env().INPUT_SERVER])
   } finally {
     await s.close()
@@ -100,7 +100,7 @@ test('healthy Badgery: want, asked once, token for the server origin', async () 
 })
 
 test('label not offered: fallback at once, with the reason', async () => {
-  const s = await stub([verdict('fallback', 'no host offers badgery-macos')])
+  const s = await stub([verdict('fallback', 'no host offers owlery-macos')])
   try {
     const got = await decide(s.env(), one, clock())
     assert.equal(got.runner.label, 'macos-15')
@@ -115,7 +115,7 @@ test('unhealthy then healthy inside the grace period: want', async () => {
   const s = await stub([verdict('unhealthy', 'host restarting'), verdict('unhealthy'), verdict('want')])
   try {
     const got = await decide(s.env(), one, clock())
-    assert.equal(got.runner.label, 'badgery-macos')
+    assert.equal(got.runner.label, 'owlery-macos')
     assert.equal(s.seen.picks.length, 3)
   } finally {
     await s.close()
@@ -151,7 +151,7 @@ test('grace is capped at 30 minutes whatever the server says', async () => {
   }
 })
 
-test('Badgery errors or unreachable: fallback', async () => {
+test('Owlery errors or unreachable: fallback', async () => {
   for (const answer of [500, 404, { labels: {} }, { labels: { runner: { answer: 'ubuntu-latest' } } }]) {
     const s = await stub([answer])
     try {
@@ -169,7 +169,7 @@ test('Badgery errors or unreachable: fallback', async () => {
   assert.equal(got.runner.label, 'macos-15')
 })
 
-test('Badgery stopping mid-grace: one more try, then fallback', async () => {
+test('Owlery stopping mid-grace: one more try, then fallback', async () => {
   const s = await stub([verdict('unhealthy'), 503, 503, verdict('want')])
   try {
     const got = await decide(s.env(), one, clock())
@@ -182,12 +182,12 @@ test('Badgery stopping mid-grace: one more try, then fallback', async () => {
 })
 
 test('no id-token permission: fallback naming the fix', async () => {
-  const got = await decide({ INPUT_SERVER: 'https://hooks.badgery.ai' }, one, clock())
+  const got = await decide({ INPUT_SERVER: 'https://hooks.owlery.sh' }, one, clock())
   assert.equal(got.runner.label, 'macos-15')
   assert.match(got.runner.reason, /id-token: write/)
 })
 
-test('black-holed Badgery costs the connect timeout, not the request timeout', async () => {
+test('black-holed Owlery costs the connect timeout, not the request timeout', async () => {
   const env = {
     INPUT_SERVER: 'https://10.255.255.1',
     ACTIONS_ID_TOKEN_REQUEST_URL: 'x',
@@ -212,20 +212,20 @@ test('black-holed Badgery costs the connect timeout, not the request timeout', a
 test('outputs are only ever the workflow’s own labels', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pick-'))
   const env = { GITHUB_OUTPUT: path.join(dir, 'out'), GITHUB_STEP_SUMMARY: path.join(dir, 'sum') }
-  const routes = parseRoutes({ INPUT_ROUTES: 'a: badgery-linux -> ubuntu-latest\nb: badgery-macos -> macos-15' })
+  const routes = parseRoutes({ INPUT_ROUTES: 'a: owlery-linux -> ubuntu-latest\nb: owlery-macos -> macos-15' })
   const write = process.stdout.write
   process.stdout.write = () => true
   try {
-    writeOutputs(env, routes, { a: { label: 'badgery-linux', reason: 'ok' }, b: { label: 'evil-label', reason: 'x|y' } })
+    writeOutputs(env, routes, { a: { label: 'owlery-linux', reason: 'ok' }, b: { label: 'evil-label', reason: 'x|y' } })
   } finally {
     process.stdout.write = write
   }
-  assert.equal(fs.readFileSync(env.GITHUB_OUTPUT, 'utf8'), 'a=badgery-linux\nb=macos-15\n')
+  assert.equal(fs.readFileSync(env.GITHUB_OUTPUT, 'utf8'), 'a=owlery-linux\nb=macos-15\n')
   fs.rmSync(dir, { recursive: true })
 })
 
 test('a route named like an Object property is still decided', async () => {
-  const routes = parseRoutes({ INPUT_ROUTES: 'constructor: badgery-linux -> ubuntu-latest' })
+  const routes = parseRoutes({ INPUT_ROUTES: 'constructor: owlery-linux -> ubuntu-latest' })
   const s = await stub([{ labels: { constructor: { answer: 'fallback', reason: 'no Linux' } }, graceSeconds: 0 }])
   try {
     const got = await decide(s.env(), routes, clock())
@@ -253,7 +253,7 @@ test('a grace period shorter than the retry interval is still waited, then asked
     const c = clock()
     const start = c.now()
     const got = await decide(s.env(), one, c)
-    assert.equal(got.runner.label, 'badgery-macos')
+    assert.equal(got.runner.label, 'owlery-macos')
     assert.equal(c.now() - start, 5_000)
   } finally {
     await s.close()
@@ -261,7 +261,7 @@ test('a grace period shorter than the retry interval is still waited, then asked
 })
 
 test('a route already answered keeps its answer while another waits', async () => {
-  const routes = parseRoutes({ INPUT_ROUTES: 'win: badgery-windows -> windows-latest\nmac: badgery-macos -> macos-15' })
+  const routes = parseRoutes({ INPUT_ROUTES: 'win: owlery-windows -> windows-latest\nmac: owlery-macos -> macos-15' })
   const two = (win, mac) => ({ labels: { ...(win && { win }), mac }, graceSeconds: 180 })
   const s = await stub([
     two({ answer: 'fallback', reason: 'no Windows here' }, { answer: 'unhealthy' }),
@@ -271,9 +271,9 @@ test('a route already answered keeps its answer while another waits', async () =
     const got = await decide(s.env(), routes, clock())
     assert.equal(got.win.label, 'windows-latest')
     assert.match(got.win.reason, /no Windows/)
-    assert.equal(got.mac.label, 'badgery-macos')
+    assert.equal(got.mac.label, 'owlery-macos')
     // The second ask is only about the route still waiting.
-    assert.deepEqual(s.seen.picks[1].body, { labels: { mac: 'badgery-macos' } })
+    assert.deepEqual(s.seen.picks[1].body, { labels: { mac: 'owlery-macos' } })
   } finally {
     await s.close()
   }

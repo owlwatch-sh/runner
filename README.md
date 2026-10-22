@@ -1,16 +1,16 @@
-# Badgery runner picker
+# Owlery runner picker
 
-Routes a workflow's jobs to Badgery when it is healthy and has what they ask
-for, and to your own fallback runners when it is not: Badgery down or
-unreachable, or a label no Badgery machine offers at all. When machines offer
+Routes a workflow's jobs to Owlery when it is healthy and has what they ask
+for, and to your own fallback runners when it is not: Owlery down or
+unreachable, or a label no Owlery machine offers at all. When machines offer
 the label but none is ready (one restarting, say), the picker waits out the
-repository's grace period first. A busy but healthy Badgery keeps the job;
-this is a health check, not a scheduler.
+repository's grace period first. A busy but healthy Owlery keeps the job;
+this is a health check, not a scheduler. Design: `docs/runner-fallback.md`.
 
 ```yaml
 jobs:
   pick:
-    runs-on: ubuntu-latest          # your cheapest runner that isn't Badgery
+    runs-on: ubuntu-latest          # your cheapest runner that isn't Owlery
     timeout-minutes: 35
     permissions:
       id-token: write
@@ -18,9 +18,9 @@ jobs:
       runner: ${{ steps.p.outputs.runner }}
     steps:
       - id: p
-        uses: badgery/runner@v1
+        uses: owlery-sh/runner@v1
         with:
-          want: badgery-macos
+          want: owlery-macos
           fallback: macos-15
   build:
     needs: pick
@@ -32,27 +32,18 @@ Several routes at once, one output per key:
 ```yaml
         with:
           routes: |
-            linux: badgery-linux -> ubuntu-latest
-            mac: badgery-macos -> macos-15
+            linux: owlery-linux -> ubuntu-latest
+            mac: owlery-macos -> macos-15
 ```
 
-`server` defaults to `https://hooks.badgery.ai`; a self-hosted Badgery passes
+`server` defaults to `https://hooks.owlery.sh`; a self-hosted Owlery passes
 its own public origin.
 
-On Badgery's hosted service fallback is off until it is turned on for the
-repository in the dashboard, and until then Badgery answers "Badgery" for
-every route. A self-hosted Badgery has no dashboard to turn it on from, so the
+On Owlery's hosted service fallback is off until it is turned on for the
+repository in the dashboard, and until then Owlery answers "Owlery" for
+every route. A self-hosted Owlery has no dashboard to turn it on from, so the
 picker being in the workflow is the opt-in there. Either way, when the picker
-itself cannot get an answer — Badgery unreachable, an error, no OIDC token —
+itself cannot get an answer — Owlery unreachable, an error, no OIDC token —
 it chooses the fallback: that is the case it exists for.
 
-It fails open: if Badgery errors, refuses, or cannot be reached within two
-seconds, the job goes to your fallback. Every output is one of the two labels
-your workflow wrote; Badgery's answer is a verdict, never a label. The pick job
-needs `id-token: write`, because the workflow's OIDC token is how Badgery knows
-which repository is asking; nothing else is sent.
-
-Tests: `node --test index.test.js`.
-
-This repository is published from Badgery's own source; changes are made
-there.
+Tests: `node --test actions/runner/index.test.js`.
