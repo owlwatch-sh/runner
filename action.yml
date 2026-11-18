@@ -1,13 +1,13 @@
-name: Owlery runner picker
+name: Owlwatch runner picker
 description: >-
-  Route a workflow's jobs to Owlery when it is healthy and has what they ask
+  Route a workflow's jobs to Owlwatch when it is healthy and has what they ask
   for, and to your own fallback runners when it is not.
 inputs:
   want:
-    description: The Owlery label to use when Owlery can take the job.
+    description: The Owlwatch label to use when Owlwatch can take the job.
     required: false
   fallback:
-    description: The label to use otherwise. Yours; Owlery never chooses it.
+    description: The label to use otherwise. Yours; Owlwatch never chooses it.
     required: false
   routes:
     description: >-
@@ -15,9 +15,22 @@ inputs:
       becomes an output. Use instead of want/fallback.
     required: false
   server:
-    description: The Owlery server's public origin.
+    description: The Owlwatch server's public origin.
     required: false
-    default: https://hooks.owlery.sh
+    default: https://hooks.owlwatch.sh
+  alert:
+    description: >-
+      Open an issue titled "Runner fallback used" when any route falls back
+      (or comment on the open one), and close it when Owlwatch serves every
+      route of a run again. Needs `issues: write` on the pick job. Never fails
+      the picker: if the issue cannot be written, the job summary says why and
+      the fallback is still chosen. `false` turns it off.
+    required: false
+    default: 'true'
+  token:
+    description: The token the alert issue is written with. The workflow's own by default.
+    required: false
+    default: ${{ github.token }}
 outputs:
   runner:
     description: The label chosen for want/fallback. With routes, one output per key.
